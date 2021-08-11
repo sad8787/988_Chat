@@ -43,11 +43,27 @@ public class Server {
                                 while (true){
                                     String request = in.readUTF(); // Ждём сообщение от пользователя
                                     System.out.println(currentUser.getUserName()+": "+request);
-                                    for (User user : users) {
-                                        if(users.indexOf(user) == users.indexOf(currentUser)) continue;
-                                        DataOutputStream out = new DataOutputStream(user.getSocket().getOutputStream());
-                                        out.writeUTF(currentUser.getUserName()+": "+request);
+                                    //чтобы отправить личное сообщение, вы должны написать правильную структуру
+                                    //Рене: sssyysy sudoisoa
+                                    //где  ":"  разделитель
+                                    String [] requestarray=request.split(":");//
+                                    if ( NameExists( users,requestarray[0]))
+                                    {
+                                        for (User user : users) {
+                                            if(users.indexOf(user) == users.indexOf(currentUser)) continue;
+                                            if (requestarray[0].compareTo(user.getUserName())==0 ){
+                                                DataOutputStream out = new DataOutputStream(user.getSocket().getOutputStream());
+                                                out.writeUTF(currentUser.getUserName()+": "+request);
+                                            }
+                                        }
+                                    }else{
+                                        for (User user : users) {
+                                            if(users.indexOf(user) == users.indexOf(currentUser)) continue;
+                                            DataOutputStream out = new DataOutputStream(user.getSocket().getOutputStream());
+                                            out.writeUTF(currentUser.getUserName()+": "+request);
+                                        }
                                     }
+
                                 }
                             }catch (IOException e){
                                 users.remove(currentUser);
