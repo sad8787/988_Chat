@@ -7,48 +7,76 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 public class Server {
     public static void main(String[] args) {
         {
-            List<User> users=new ArrayList<User>();
+            ArrayList<User> users = new ArrayList<User>();
             try {
                 ServerSocket serverSocket = new ServerSocket(8188); // Создаём серверный сокет
                 System.out.println("Сервер запущен");
                 while (true){ // Бесконечный цикл для ожидания родключения клиентов
-                    Thread clientThread=new Thread(new Runnable() {
-
+                    Socket socket = serverSocket.accept(); // Ожидаем подключения клиента
+                    System.out.println("Клиент подключился");
+                    User currentUser = new User(socket);
+                    //users.add(currentUser);
+                    DataInputStream in = new DataInputStream(currentUser.getSocket().getInputStream()); // Поток ввода
+                    DataOutputStream out = new DataOutputStream(currentUser.getSocket().getOutputStream()); // Поток вывода
+                    Thread thread = new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                Socket socket = serverSocket.accept(); // Ожидаем подключения клиента
-                                System.out.println("Клиент подключился");
-                                User currentuser=new User(socket);
-                                DataInputStream in = new DataInputStream(currentuser.getSoket().getInputStream()); // Поток ввода
-                                DataOutputStream out = new DataOutputStream(currentuser.getSoket().getOutputStream()); // Поток вывода
-                                out.writeUTF("Name ?");
-                                String request = in.readUTF();
-                                out.writeUTF("Добро пожаловать на сервер "+request);
-                                currentuser.setName(request);
-                                users.add(currentuser) ;
-                                while (true){
-                                     request = in.readUTF(); // Ждём сообщение от пользователя
-                                    for(user:users){
-
-                                    }
-                                    out.writeUTF(request.toUpperCase()); // Отправляем сообщение пользователю
+                                out.writeUTF("Добро пожаловать на сервер");
+                                String userName ; // Ожидаем имя от клиента
+                                do {
+                                    out.writeUTF("Введите ваше имя: ");
+                                    userName = in.readUTF();
+                                }while (NameExists( users,userName));
+                                currentUser.setUserName(userName);
+                                users.add(currentUser);
+                                out.writeUTF("Ваше имя: "+currentUser.getUserName());
+                                for (User user : users) {
+                                    DataOutputStream out = new DataOutputStream(user.getSocket().getOutputStream());
+                                    out.writeUTF(currentUser.getUserName()+" присоединился к беседе");
                                 }
-                            }catch (Exception e){}
+                                while (true){
+                                    String request = in.readUTF(); // Ждём сообщение от пользователя
+                                    System.out.println(currentUser.getUserName()+": "+request);
+                                    for (User user : users) {
+                                        if(users.indexOf(user) == users.indexOf(currentUser)) continue;
+                                        DataOutputStream out = new DataOutputStream(user.getSocket().getOutputStream());
+                                        out.writeUTF(currentUser.getUserName()+": "+request);
+                                    }
+                                }
+                            }catch (IOException e){
+                                users.remove(currentUser);
+                                for (User user : users) {
+                                    try {
+                                        DataOutputStream out = new DataOutputStream(user.getSocket().getOutputStream());
+                                        out.writeUTF(currentUser.getUserName()+" покинул чат");
+                                    } catch (IOException ioException) {
+                                        ioException.printStackTrace();
+                                    }
+                                }
+                            }
                         }
                     });
-                    clientThread.start();
-
+                    thread.start();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+    public static boolean NameExists(ArrayList<User> users,String name){
+        boolean result=false;
+        for (User user : users){
+            if (name.compareTo(user.getUserName())==0 ){
+                result= true;
+                break;
+            }
+        }
+        return result;
     }
 }

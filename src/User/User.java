@@ -3,26 +3,14 @@ package User;
 import java.net.Socket;
 
 public class User {
-    String name;
-    public Socket soket;
+    private Socket socket;
+    private String userName;
 
-    public User( Socket soket) {
-        this.soket = soket;
+    public User(Socket socket) {
+        this.socket = socket;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public Socket getSoket() {
-        return soket;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setSoket(Socket soket) {
-        this.soket = soket;
-    }
+    public Socket getSocket() { return socket; }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 }
